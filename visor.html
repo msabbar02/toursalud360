@@ -1,0 +1,1968 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>TourSalud360 — Visor Interactivo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="tour.js" type="text/javascript"></script>
+    <style>
+        :root {
+            /* Colores Navega (Modo Claro) */
+            --nav-purple: #c4a4f0;
+            --nav-yellow: #f5d76e;
+            --nav-green: #6ed8bc;
+            --nav-blue: #7ab3f5;
+            --nav-purple-dark: #46227b;
+
+            --bg-dark: #f4f2fb;
+            --bg-card: #ffffff;
+            --primary: var(--nav-purple-dark);
+            --primary-glow: rgba(70, 34, 123, 0.4);
+            --text-main: #2b2d42;
+            --text-muted: #6b7280;
+            --grid-line: rgba(100, 80, 180, 0.12);
+            --card-border: rgba(255, 255, 255, 0.85);
+            --card-border-hover: rgba(255, 255, 255, 1);
+            --card-glow-hover: rgba(139, 174, 238, 0.5);
+            --stat-divider: rgba(0, 0, 0, 0.08);
+            --modal-bg: #ffffff;
+        }
+
+        body.dark-theme {
+            /* Colores Navega (Modo Oscuro) */
+            --nav-purple: #7c3abf;
+            --nav-yellow: #c9a726;
+            --nav-green: #29a87a;
+            --nav-blue: #2e6fd4;
+            --nav-purple-light: #d8c8f5;
+
+            --bg-dark: #07070f;
+            --bg-card: #13131f;
+            --primary: var(--nav-purple-light);
+            --primary-glow: rgba(216, 200, 245, 0.35);
+            --text-main: #ffffff;
+            --text-muted: #b8b6d4;
+            --grid-line: rgba(100, 120, 200, 0.18);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-border-hover: rgba(216, 200, 245, 0.4);
+            --card-glow-hover: rgba(124, 58, 191, 0.35);
+            --stat-divider: rgba(255, 255, 255, 0.1);
+            --modal-bg: #13131f;
+        }
+
+        /* ══ AJUSTES RESPONSIVE MÓVIL ══ */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 80px 15px 10px !important;
+            }
+
+            .hero h1 {
+                font-size: 32px !important;
+            }
+
+            .hero p {
+                font-size: 13px !important;
+            }
+
+            /* APAGAR EL 3D EN MÓVIL PARA QUE NO SE APLASTEN LAS CARTAS */
+            .scene-3d {
+                flex-direction: column !important;
+                align-items: center;
+                gap: 30px !important;
+                padding-top: 0 !important;
+                perspective: none !important;
+            }
+
+            /* TAMAÑO FIJO DE LA CARTA PARA MÓVIL */
+            .card-wrap {
+                width: 100% !important;
+                max-width: 320px !important;
+                height: 380px !important;
+                transform-style: flat !important;
+                transform: none !important;
+            }
+
+            .card-3d {
+                transform: none !important;
+                position: relative !important;
+            }
+
+            #top-controls {
+                top: 15px !important;
+                right: 15px !important;
+                gap: 10px !important;
+            }
+
+            .custom-lang-selector .lang-text {
+                display: none;
+            }
+
+            .stats-bar {
+                gap: 20px !important;
+                flex-wrap: wrap;
+            }
+
+            #top-bar {
+                padding: 15px !important;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .controls-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        .app-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 32px;
+            z-index: 10;
+        }
+
+        #logo-isterria {
+            height: 52px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-theme {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 174, 238, 0.3);
+            color: var(--text-main);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-theme:hover {
+            transform: scale(1.1);
+            border-color: var(--primary);
+        }
+
+        body.dark-theme .btn-theme {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        #loading {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        #home-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: opacity 0.6s ease;
+        }
+
+        #home-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .background-3d {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            z-index: 0;
+            perspective: 1000px;
+            background-color: var(--bg-dark);
+            pointer-events: none;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.75;
+            animation: float3d 20s infinite ease-in-out alternate;
+            transform-style: preserve-3d;
+        }
+
+        body:not(.dark-theme) .orb {
+            opacity: 0.85;
+            filter: blur(70px);
+        }
+
+        .orb-1 {
+            width: 50vw;
+            height: 50vw;
+            background: linear-gradient(135deg, var(--nav-purple), var(--nav-yellow));
+            top: -10%;
+            left: -10%;
+            animation-duration: 25s;
+        }
+
+        .orb-2 {
+            width: 45vw;
+            height: 45vw;
+            background: linear-gradient(135deg, var(--nav-green), var(--nav-blue));
+            bottom: -20%;
+            right: -10%;
+            animation-duration: 22s;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 40vw;
+            height: 40vw;
+            background: linear-gradient(135deg, var(--nav-blue), var(--nav-purple));
+            top: 40%;
+            left: 30%;
+            animation-duration: 28s;
+            animation-delay: -10s;
+        }
+
+        .orb-4 {
+            width: 50vw;
+            height: 50vw;
+            background: linear-gradient(135deg, var(--nav-yellow), var(--nav-green));
+            top: 10%;
+            right: 10%;
+            animation-duration: 30s;
+            animation-delay: -15s;
+        }
+
+        @keyframes float3d {
+            0% {
+                transform: translateZ(-200px) translate(0, 0) scale(0.8);
+            }
+
+            50% {
+                transform: translateZ(100px) translate(10%, 10%) scale(1.1);
+            }
+
+            100% {
+                transform: translateZ(-100px) translate(-5%, -10%) scale(0.9);
+            }
+        }
+
+        .grid-bg {
+            position: fixed;
+            left: -50%;
+            top: -50%;
+            width: 200%;
+            height: 200%;
+            background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 1;
+            transform: perspective(1000px) rotateX(60deg) translateY(-100px) translateZ(-200px);
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% {
+                transform: perspective(1000px) rotateX(60deg) translateY(0) translateZ(-200px);
+            }
+
+            100% {
+                transform: perspective(1000px) rotateX(60deg) translateY(60px) translateZ(-200px);
+            }
+        }
+
+        .vignette-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 300px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(196, 164, 240, 0.25) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+            transition: background 0.4s ease;
+        }
+
+        body.dark-theme .vignette-top {
+            background: radial-gradient(ellipse at 50% 0%, rgba(100, 60, 180, 0.2) 0%, transparent 70%);
+        }
+
+        .hero {
+            position: relative;
+            z-index: 2;
+            padding: 50px 20px 24px;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(var(--primary-glow), 0.08);
+            border: 1px solid rgba(139, 174, 238, 0.2);
+            border-radius: 100px;
+            padding: 6px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 28px;
+        }
+
+        body.dark-theme .hero-badge {
+            border-color: rgba(216, 200, 245, 0.2);
+            background: rgba(124, 58, 191, 0.1);
+        }
+
+        .hero-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.6);
+            }
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 5vw, 52px);
+            font-weight: 700;
+            letter-spacing: -1.5px;
+            color: var(--primary);
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 span {
+            color: var(--primary);
+        }
+
+        .hero p {
+            font-size: 15px;
+            color: var(--text-muted);
+            font-weight: 300;
+            line-height: 1.7;
+        }
+
+        .scene-3d {
+            position: relative;
+            z-index: 2;
+            perspective: 1200px;
+            perspective-origin: 50% 20%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 28px;
+            padding: 12px 40px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card-wrap {
+            width: 280px;
+            height: 360px;
+            position: relative;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .card-3d {
+            position: absolute;
+            inset: 0;
+            border-radius: 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card-wrap:hover .card-3d {
+            border-color: var(--card-border-hover);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.18), 0 0 40px var(--card-glow-hover), inset 0 1px 0 var(--card-border-hover);
+        }
+
+        .card-3d::before {
+            content: '';
+            position: absolute;
+            left: -5px;
+            top: 5px;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.04);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card-wrap:hover .card-3d::before {
+            opacity: 1;
+        }
+
+        .card-thumb {
+            width: 100%;
+            height: 180px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-thumb-inner {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.4s ease;
+        }
+
+        .card-wrap:hover .card-thumb-inner {
+            transform: scale(1.06);
+        }
+
+        .thumb-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 30%, var(--bg-card) 100%);
+            z-index: 1;
+        }
+
+        .card-scan {
+            position: absolute;
+            top: -100%;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(139, 174, 238, 0.4) 50%, transparent);
+            z-index: 2;
+        }
+
+        .card-wrap:hover .card-scan {
+            animation: scan-line 1.2s ease forwards;
+        }
+
+        @keyframes scan-line {
+            0% {
+                top: -100%;
+            }
+
+            100% {
+                top: 100%;
+            }
+        }
+
+        .card-corner {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card-wrap:hover .card-corner {
+            opacity: 1;
+        }
+
+        .card-corner.tl {
+            top: 8px;
+            left: 8px;
+            border-top: 1.5px solid var(--primary);
+            border-left: 1.5px solid var(--primary);
+        }
+
+        .card-corner.tr {
+            top: 8px;
+            right: 8px;
+            border-top: 1.5px solid var(--primary);
+            border-right: 1.5px solid var(--primary);
+        }
+
+        .card-corner.bl {
+            bottom: 8px;
+            left: 8px;
+            border-bottom: 1.5px solid var(--primary);
+            border-left: 1.5px solid var(--primary);
+        }
+
+        .card-corner.br {
+            bottom: 8px;
+            right: 8px;
+            border-bottom: 1.5px solid var(--primary);
+            border-right: 1.5px solid var(--primary);
+        }
+
+        .card-tag {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 7px;
+            opacity: 0.8;
+        }
+
+        .card-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+            line-height: 1.3;
+            letter-spacing: -0.3px;
+        }
+
+        .card-body {
+            padding: 18px 22px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: calc(100% - 180px);
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .meta-dot {
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .card-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(139, 174, 238, 0.1);
+            border: 1px solid rgba(139, 174, 238, 0.25);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--primary);
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        body.dark-theme .card-btn {
+            background: rgba(124, 58, 191, 0.12);
+            border-color: rgba(216, 200, 245, 0.15);
+        }
+
+        .card-wrap:hover .card-btn {
+            background: rgba(139, 174, 238, 0.22);
+            border-color: rgba(139, 174, 238, 0.4);
+        }
+
+        body.dark-theme .card-wrap:hover .card-btn {
+            background: rgba(124, 58, 191, 0.25);
+            border-color: rgba(216, 200, 245, 0.35);
+        }
+
+        .btn-arrow {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(139, 174, 238, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: transform 0.2s ease, background 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        body.dark-theme .btn-arrow {
+            background: rgba(216, 200, 245, 0.1);
+        }
+
+        .card-wrap:hover .btn-arrow {
+            transform: translateX(3px);
+            background: rgba(139, 174, 238, 0.35);
+        }
+
+        body.dark-theme .card-wrap:hover .btn-arrow {
+            background: rgba(216, 200, 245, 0.25);
+        }
+
+        #stats-bar {
+            display: none;
+        }
+
+        .stats-bar {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 48px;
+            padding: 32px 0 60px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 3px;
+        }
+
+        .stat-divider {
+            width: 1px;
+            height: 32px;
+            background: var(--stat-divider);
+        }
+
+        #visor-container {
+            display: none;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: #000;
+            z-index: 9999 !important;
+        }
+
+        #visor-container.visible {
+            display: block;
+        }
+
+        #visor {
+            width: 100%;
+            height: 100%;
+        }
+
+        #fade-transition {
+            position: absolute;
+            inset: 0;
+            z-index: 195;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+        }
+
+        #fade-transition.active {
+            opacity: 1;
+        }
+
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .info-group {
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-centro {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        .info-sala {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .controls-group {
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #radar-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #radar-wrapper::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 2;
+        }
+
+        #radar-fov {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 320deg, rgba(0, 165, 255, 0.8) 0deg, rgba(0, 165, 255, 0.8) 80deg, transparent 80deg);
+            transform-origin: center;
+            transition: transform 0.1s linear;
+        }
+
+        .btn-ui {
+            background: rgba(15, 15, 20, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 100px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-close {
+            background: rgba(255, 50, 50, 0.1);
+            color: #ff5555;
+            border-color: rgba(255, 50, 50, 0.2);
+        }
+
+        .btn-close:hover {
+            background: #ff5555;
+            color: #fff;
+        }
+
+        .switch-theme {
+            position: relative;
+            display: inline-block;
+            width: 70px;
+            height: 34px;
+        }
+
+        .switch-theme input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider-theme {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #f44336;
+            transition: .4s;
+            border-radius: 34px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-theme:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+
+        .switch-theme input:checked+.slider-theme {
+            background-color: #4CAF50;
+        }
+
+        .switch-theme input:checked+.slider-theme:before {
+            transform: translateX(36px);
+        }
+
+        .slider-theme:after {
+            content: '🌙';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 14px;
+            z-index: 1;
+        }
+
+        .switch-theme input:checked+.slider-theme:after {
+            content: '☀️';
+            left: 10px;
+            right: auto;
+        }
+
+        .custom-lang-selector {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            font-family: inherit;
+        }
+
+        .lang-trigger {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 14px 4px 12px;
+            height: 34px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 20px;
+        }
+
+        .lang-trigger:hover {
+            background: rgba(139, 174, 238, 0.08);
+        }
+
+        body.dark-theme .lang-trigger:hover {
+            background: rgba(216, 200, 245, 0.1);
+        }
+
+        .lang-text {
+            color: var(--text-main);
+            font-size: 13px;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .lang-arrow {
+            font-size: 9px;
+            color: var(--text-main);
+            transition: transform 0.3s ease;
+        }
+
+        .custom-lang-selector.open .lang-arrow {
+            transform: rotate(180deg);
+        }
+
+        .lang-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            list-style: none;
+            padding: 6px;
+            margin: 0;
+            width: 140px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+            z-index: 600;
+        }
+
+        .custom-lang-selector.open .lang-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .lang-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+
+        .lang-option:hover {
+            background: rgba(139, 174, 238, 0.15);
+            color: var(--primary);
+        }
+
+        body.dark-theme .lang-option:hover {
+            background: rgba(216, 200, 245, 0.15);
+        }
+
+        .lang-flag-icon {
+            width: 18px;
+            border-radius: 2px;
+            margin-right: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ══ ESTILOS MODAL VR ══ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background: var(--modal-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .vr-choice-btn {
+            flex: 1;
+            padding: 25px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            min-width: 130px;
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .vr-choice-btn:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .vr-choice-btn.active-vr {
+            background: var(--nav-purple);
+            border-color: var(--nav-purple-dark);
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="top-controls"
+        style="position: fixed; top: 24px; right: 24px; z-index: 500; display: flex; align-items: center; gap: 15px; transition: opacity 0.5s;">
+        <div class="custom-lang-selector" id="lang-selector-wrapper" title="Cambiar idioma">
+            <div class="lang-trigger" onclick="toggleLangMenu()">
+                <img id="lang-flag" src="https://upload.wikimedia.org/wikipedia/commons/8/89/Bandera_de_Espa%C3%B1a.svg"
+                    class="lang-flag-icon" alt="Bandera">
+                <span id="lang-current-text" class="lang-text">ES</span>
+                <span class="lang-arrow" id="lang-arrow">▼</span>
+            </div>
+            <ul class="lang-menu" id="lang-menu">
+                <li onclick="changeLangCustom('es')" class="lang-option">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Bandera_de_Espa%C3%B1a.svg"
+                        class="lang-flag-icon" alt="ES"> Español
+                </li>
+                <li onclick="changeLangCustom('eu')" class="lang-option">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Flag_of_the_Basque_Country.svg"
+                        class="lang-flag-icon" alt="EU"> Euskera
+                </li>
+            </ul>
+        </div>
+        <label for="theme-checkbox" class="switch-theme" title="Cambiar modo oscuro/claro">
+            <input type="checkbox" id="theme-checkbox" onchange="toggleTheme()" title="Cambiar modo oscuro/claro"
+                aria-label="Cambiar modo oscuro/claro">
+            <span class="slider-theme"></span>
+        </label>
+    </div>
+
+    <div id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Cargando Experiencia...</div>
+    </div>
+
+    <div id="vr-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 500px;">
+            <h2 style="border:none; margin-bottom: 10px; color: var(--text-main);" id="vr-modal-title">¿Cómo quieres
+                navegar?</h2>
+            <p style="color: var(--text-muted); margin-bottom: 25px; font-size:13px;" id="vr-modal-desc">Elige el
+                formato de tu experiencia</p>
+
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+
+                <button class="vr-choice-btn" onclick="entrarModoNormal()">
+                    <span style="font-size: 38px;">📱</span>
+                    <span style="font-size: 14px; font-weight: 600;">Pantalla Táctil</span>
+                    <span style="font-size: 10px; opacity: 0.6; margin-top: 4px;">Móvil / PC / Tablet</span>
+                </button>
+
+                <button class="vr-choice-btn active-vr" onclick="entrarModoVR()">
+                    <span style="font-size: 38px;">🥽</span>
+                    <span style="font-size: 14px; font-weight: 600;">Gafas VR</span>
+                    <span style="font-size: 10px; opacity: 0.6; margin-top: 4px;">Cardboard / Quest</span>
+                </button>
+
+            </div>
+
+            <button
+                style="width: 100%; padding: 12px; background: rgba(255,50,50,0.1); color: #ff5555; border: 1px solid rgba(255,50,50,0.2); border-radius: 8px; font-weight: bold; cursor: pointer;"
+                onclick="cerrarVRModal()">Cancelar / Volver</button>
+        </div>
+    </div>
+
+    <div id="home-screen" class="hidden">
+        <header class="app-header">
+            <img id="logo-isterria" src="imagenes/logotipo-fundacion-isterria.svg"
+                alt="Fundación Caja Navarra - Isterria">
+        </header>
+
+        <div class="background-3d">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+            <div class="orb orb-4"></div>
+        </div>
+        <div class="grid-bg"></div>
+        <div class="vignette-top"></div>
+
+        <div class="hero">
+            <div class="hero-badge">
+                <div class="hero-dot"></div>
+                Experiencia Inmersiva
+            </div>
+            <h1>Bienvenido a<br><span>TourSalud 360</span></h1>
+            <p>Explora nuestras instalaciones médicas desde cualquier lugar. Navega por nuestros centros a través de
+                recorridos virtuales de alta definición y conoce cada detalle.</p>
+        </div>
+
+        <div class="scene-3d" id="centros-grid"></div>
+
+        <div class="stats-bar" id="stats-bar">
+            <div class="stat-item">
+                <div class="stat-num" id="stat-centros">—</div>
+                <div class="stat-label">Centros</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-num" id="stat-zonas">—</div>
+                <div class="stat-label">Zonas 360°</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-num">HD</div>
+                <div class="stat-label">Calidad</div>
+            </div>
+        </div>
+
+        <footer
+            style="text-align: center; padding: 40px 20px 20px; margin-top: auto; z-index: 10; pointer-events: none;">
+            <img src="imagenes/logotipo-fundacion-isterria.svg" alt="Isterria" class="logo-footer"
+                style="max-height: 24px; opacity: 0.5; margin-bottom: 8px; pointer-events: none; transition: filter 0.4s ease;">
+            <div style="font-size: 11px; color: var(--text-muted); font-weight: 500; letter-spacing: 1px;">&copy; Todos
+                los derechos reservados a Isterria.</div>
+        </footer>
+    </div>
+
+    <div id="visor-container">
+        <div id="fade-transition"></div>
+        <div id="vr-reticle" style="
+    display: none;
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    transform: translate(-50%, -50%);
+    z-index: 300;
+    pointer-events: none;
+    background: transparent;
+">
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="4" fill="white" opacity="0.9" />
+                <circle cx="12" cy="12" r="8" fill="none" stroke="white" stroke-width="1.5" opacity="0.7" />
+                <line x1="12" y1="1" x2="12" y2="5" stroke="white" stroke-width="1.5" opacity="0.7" />
+                <line x1="12" y1="19" x2="12" y2="23" stroke="white" stroke-width="1.5" opacity="0.7" />
+                <line x1="1" y1="12" x2="5" y2="12" stroke="white" stroke-width="1.5" opacity="0.7" />
+                <line x1="19" y1="12" x2="23" y2="12" stroke="white" stroke-width="1.5" opacity="0.7" />
+            </svg>
+        </div>
+
+        <div id="visor">
+            <a-scene embedded cursor="rayOrigin:mouse" raycaster="objects:.hotspot-clickable"
+                vr-mode-ui="enabled: false">
+                <a-sky id="sky-img" radius="100"></a-sky>
+
+                <a-circle src="imagenes/toursalud360-nadir.png" radius="1.8" position="0 -1.8 0" rotation="-90 0 0"
+                    material="shader: flat; transparent: true; opacity: 0.9;"></a-circle>
+
+                <a-circle id="vr-exit-btn" radius="0.8" position="0 -1.75 1.5" rotation="-90 0 0"
+                    material="color: #ff3366; shader: flat" visible="false">
+                    <a-text value="SALIR VR" align="center" position="0 0 0.05" rotation="0 0 0" color="#fff" width="4"
+                        font="mozillavr" font-weight="bold"></a-text>
+                </a-circle>
+
+                <a-camera id="main-camera" look-controls="reverseMouseDrag: false" wasd-controls="enabled:false"
+                    touch-pitch>
+                    <a-entity id="vr-cursor" position="0 0 -0.8"
+                        geometry="primitive: ring; radiusInner: 0.04; radiusOuter: 0.06; segmentsTheta: 32"
+                        material="color: #ffffff; shader: flat; opacity: 0.9; transparent: true" visible="false"
+                        animation__fusing="property: material.opacity; startEvents: fusing; easing: linear; dur: 1200; from: 0.8; to: 0.1"
+                        animation__mouseleave="property: material.opacity; startEvents: mouseleave; easing: easeOutQuad; dur: 300; to: 0.8"
+                        animation__click="property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 1 1 1; to: 1.5 1.5 1.5">
+                    </a-entity>
+                </a-camera>
+                <a-entity id="hotspots-container"></a-entity>
+            </a-scene>
+        </div>
+
+        <div id="top-bar">
+            <div class="info-group">
+                <div class="info-centro" id="ui-centro-nombre">Cargando...</div>
+                <div class="info-sala" id="ui-sala-nombre">Cargando...</div>
+            </div>
+            <div class="controls-group">
+                <div id="radar-wrapper" title="Dirección de la mirada">
+                    <div id="radar-fov"></div>
+                </div>
+                <button class="btn-ui btn-close" onclick="salirAlHome()">✕ Cerrar Visita</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── SÚPERPODER PARA MIRAR ARRIBA/ABAJO CON EL DEDO EN MÓVIL ──
+        AFRAME.registerComponent('touch-pitch', {
+            init: function () {
+                this.isDragging = false;
+                this.startY = 0;
+
+                this.el.sceneEl.addEventListener('loaded', () => {
+                    const canvas = this.el.sceneEl.canvas;
+
+                    canvas.addEventListener('touchstart', (e) => {
+                        this.isDragging = true;
+                        this.startY = e.touches[0].pageY;
+                    });
+
+                    canvas.addEventListener('touchmove', (e) => {
+                        if (!this.isDragging) return;
+
+                        const look = this.el.components['look-controls'];
+                        // Solo permitimos mirar arriba/abajo con el dedo si el giroscopio está apagado (Modo Pantalla)
+                        if (look && look.data.magicWindowTrackingEnabled === false) {
+                            const deltaY = e.touches[0].pageY - this.startY;
+                            this.startY = e.touches[0].pageY;
+
+                            // Rotar la cámara arriba/abajo
+                            look.pitchObject.rotation.x += deltaY * 0.005;
+
+                            // Limitar para que no haga un giro de 360º y se rompa el cuello virtual
+                            look.pitchObject.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, look.pitchObject.rotation.x));
+                        }
+                    });
+
+                    canvas.addEventListener('touchend', () => {
+                        this.isDragging = false;
+                    });
+                });
+            }
+        });
+        let centroActivo = null;
+        let salaActiva = null;
+        let isTransitioning = false;
+        let currentLang = localStorage.getItem('navegaLang') || 'es';
+        let modoVRActivo = false;
+
+        // Hack para que iPhone recalcule bien el centro al girar la pantalla
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+                const sceneEl = document.querySelector('a-scene');
+                if (sceneEl) sceneEl.resize();
+            }, 300);
+        });
+
+        const DIC = {
+            es: {
+                heroBadge: "Experiencia Inmersiva",
+                welcome: "Bienvenido a",
+                description: "Explora nuestras instalaciones médicas desde cualquier lugar. Navega por nuestros centros a través de recorridos virtuales de alta definición y conoce cada detalle.",
+                startVisit: "Iniciar visita",
+                closeVisit: "✕ Cerrar Visita",
+                statsCenters: "Centros",
+                statsZones: "Zonas 360°",
+                statsQuality: "Calidad",
+                loading: "Cargando..."
+            },
+            eu: {
+                heroBadge: "Murgiltze Esperientzia",
+                welcome: "Ongi etorri hona",
+                description: "Arakatu gure instalazio medikoak edozein tokitatik. Nabigatu gure zentroetan bereizmen handiko ibilbide birtualen bidez eta ezagutu xehetasun guztiak.",
+                startVisit: "Bisita hasi",
+                closeVisit: "✕ Bisita itxi",
+                statsCenters: "Zentroak",
+                statsZones: "360° Guneak",
+                statsQuality: "Kalitatea",
+                loading: "Kargatzen..."
+            }
+        };
+
+        function toggleLangMenu() {
+            document.getElementById('lang-selector-wrapper').classList.toggle('open');
+        }
+
+        document.addEventListener('click', function (event) {
+            const wrapper = document.getElementById('lang-selector-wrapper');
+            if (wrapper && !wrapper.contains(event.target)) {
+                wrapper.classList.remove('open');
+            }
+        });
+
+        function changeLangCustom(val) {
+            currentLang = val;
+            localStorage.setItem('navegaLang', currentLang);
+            document.getElementById('lang-selector-wrapper').classList.remove('open');
+            updateTranslations();
+        }
+
+        function updateTranslations() {
+            const dic = DIC[currentLang];
+            const flagEl = document.getElementById('lang-flag');
+            const textEl = document.getElementById('lang-current-text');
+
+            if (textEl) textEl.textContent = currentLang.toUpperCase();
+            if (flagEl) {
+                flagEl.src = currentLang === 'es' ? "https://upload.wikimedia.org/wikipedia/commons/8/89/Bandera_de_Espa%C3%B1a.svg" : "https://upload.wikimedia.org/wikipedia/commons/2/2d/Flag_of_the_Basque_Country.svg";
+            }
+
+            const elLoading = document.querySelector('.loading-text');
+            if (elLoading) elLoading.textContent = dic.loading;
+
+            const elBadge = document.querySelector('.hero-badge');
+            if (elBadge) elBadge.innerHTML = `<div class="hero-dot"></div>${dic.heroBadge}`;
+
+            const elHeroH1 = document.querySelector('.hero h1');
+            if (elHeroH1) elHeroH1.innerHTML = `${dic.welcome}<br><span>TourSalud 360</span>`;
+
+            const elHeroP = document.querySelector('.hero p');
+            if (elHeroP) elHeroP.textContent = dic.description;
+
+            const statLabels = document.querySelectorAll('.stat-label');
+            if (statLabels.length >= 3) {
+                statLabels[0].textContent = dic.statsCenters;
+                statLabels[1].textContent = dic.statsZones;
+                statLabels[2].textContent = dic.statsQuality;
+            }
+
+            const btnClose = document.querySelector('.btn-close');
+            if (btnClose) btnClose.textContent = dic.closeVisit;
+
+            if (centroActivo) {
+                document.getElementById('ui-centro-nombre').textContent = centroActivo.nombre[currentLang] || centroActivo.nombre.es || centroActivo.nombre;
+                const elSalaInfo = document.getElementById('ui-sala-nombre');
+                if (salaActiva && elSalaInfo) {
+                    elSalaInfo.textContent = salaActiva.nombre[currentLang] || salaActiva.nombre.es || salaActiva.nombre;
+                }
+            }
+
+            const homeScreen = document.getElementById('home-screen');
+            if (homeScreen && !homeScreen.classList.contains('hidden')) {
+                construirHome();
+            }
+        }
+
+        AFRAME.registerComponent('billboard', {
+            tick: function () {
+                const camera = this.el.sceneEl.camera;
+                if (camera) {
+                    const target = new THREE.Vector3();
+                    camera.getWorldPosition(target);
+                    this.el.object3D.lookAt(target);
+                }
+            }
+        });
+
+        window.addEventListener('load', () => {
+            updateTranslations();
+
+            // Asignar el click al botón de salir de VR que está en el suelo
+            document.getElementById('vr-exit-btn').addEventListener('click', salirVRCompleto);
+
+            if (typeof TOUR === 'undefined' || !TOUR.centros) {
+                document.getElementById('loading').innerHTML = '<div style="color:#ff5555; text-align:center;"><b>Error de conexión</b><br>No se pudieron cargar los datos de los centros.</div>';
+                return;
+            }
+
+            construirHome();
+
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('home-screen').classList.remove('hidden');
+            }, 800);
+
+            requestAnimationFrame(actualizarRadar);
+        });
+
+        function actualizarRadar() {
+            if (centroActivo) {
+                const cam = document.getElementById('main-camera');
+                if (cam && cam.components['look-controls']) {
+                    const yawRad = cam.components['look-controls'].yawObject.rotation.y;
+                    const yawDeg = yawRad * (180 / Math.PI);
+                    const fov = document.getElementById('radar-fov');
+                    if (fov) fov.style.transform = `rotate(${-yawDeg}deg)`;
+                }
+            }
+            requestAnimationFrame(actualizarRadar);
+        }
+
+        function construirHome() {
+            const grid = document.getElementById('centros-grid');
+            grid.innerHTML = '';
+
+            let totalZonas = 0;
+            let totalCentros = 0;
+
+            TOUR.centros.forEach((centro, index) => {
+                if (!centro.salas || centro.salas.length === 0) return;
+
+                totalZonas += centro.salas.length;
+                totalCentros++;
+
+                const wrap = document.createElement('div');
+                wrap.className = 'card-wrap';
+
+                let imgFondo = centro.fondo || centro.salas[0].foto;
+                const bgUrl = centro.carpeta + imgFondo;
+                const salaNames = centro.salas.slice(0, 3).map(s => s.nombre[currentLang] || s.nombre.es || s.nombre).join(' · ');
+
+                wrap.innerHTML = `
+                    <div class="card-3d">
+                        <div class="card-thumb">
+                            <div class="card-thumb-inner" style="background-image:url('${bgUrl}');background-size:cover;background-position:center;"></div>
+                            <div class="thumb-overlay"></div>
+                            <div class="card-scan"></div>
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                        </div>
+                        <div class="card-body">
+                            <div>
+                                <div class="card-tag">Tour 360°</div>
+                                <div class="card-name">${centro.nombre[currentLang] || centro.nombre.es || centro.nombre}</div>
+                            </div>
+                            <div class="card-btn">
+                                <span>${DIC[currentLang].startVisit}</span>
+                                <div class="btn-arrow">→</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                wrap.onclick = () => iniciarTour(index);
+                grid.appendChild(wrap);
+
+                wrap.addEventListener('mousemove', e => {
+                    const rect = wrap.getBoundingClientRect();
+                    const cx = rect.left + rect.width / 2;
+                    const cy = rect.top + rect.height / 2;
+                    const dx = (e.clientX - cx) / (rect.width / 2);
+                    const dy = (e.clientY - cy) / (rect.height / 2);
+                    const rotX = -dy * 12;
+                    const rotY = dx * 12;
+                    wrap.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(10px)`;
+                    wrap.style.transition = 'transform 0.05s linear';
+                });
+
+                wrap.addEventListener('mouseleave', () => {
+                    wrap.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    wrap.style.transform = 'rotateX(0deg) rotateY(0deg) translateZ(0px)';
+                    setTimeout(() => { wrap.style.transition = 'transform 0.05s linear'; }, 500);
+                });
+            });
+
+            if (totalCentros > 0) {
+                document.getElementById('stat-centros').textContent = totalCentros;
+                document.getElementById('stat-zonas').textContent = totalZonas;
+                document.getElementById('stats-bar').style.display = 'flex';
+            }
+        }
+
+        // ── CONTROL DE MODOS (PANTALLA O VR) ────────────────────────
+        function iniciarTour(index) {
+            centroActivo = TOUR.centros[index];
+            document.getElementById('vr-modal').classList.add('show'); // Abrir Modal Selector
+        }
+
+        function cerrarVRModal() {
+            document.getElementById('vr-modal').classList.remove('show');
+            centroActivo = null;
+        }
+
+        // Función para forzar pantalla completa nativa del móvil
+        function goFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) { elem.requestFullscreen(); }
+            else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); } // iOS Safari
+        }
+
+        function entrarModoNormal() {
+            document.getElementById('vr-modal').classList.remove('show');
+            goFullscreen(); // <- Llama a pantalla completa
+            prepararEscena(false);
+        }
+
+        function entrarModoVR() {
+            document.getElementById('vr-modal').classList.remove('show');
+            goFullscreen(); // Llama a pantalla completa
+            prepararEscena(true);
+
+            // EL CONSEJO DE ORO PARA EL USUARIO
+            alert("CONSEJO: Asegúrate de tener activado el GIRO AUTOMÁTICO en tu móvil. Ponlo en horizontal y toca la pantalla negra para empezar. ¡No toques la 'X'!");
+
+            const sceneEl = document.querySelector('a-scene');
+            if (sceneEl.hasLoaded) {
+                sceneEl.enterVR();
+            } else {
+                sceneEl.addEventListener('loaded', () => sceneEl.enterVR());
+            }
+        }
+
+        function prepararEscena(esVR) {
+            modoVRActivo = esVR;
+            document.getElementById('home-screen').classList.add('hidden');
+            document.getElementById('visor-container').classList.add('visible');
+
+            const topControls = document.getElementById('top-controls');
+            if (topControls) topControls.style.display = 'none';
+
+            setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+
+            document.getElementById('ui-centro-nombre').textContent = centroActivo.nombre[currentLang] || centroActivo.nombre.es || centroActivo.nombre;
+
+            const sceneEl = document.querySelector('a-scene');
+            const cam = document.getElementById('main-camera');
+            const cursor = document.getElementById('vr-cursor');
+            const exitBtn = document.getElementById('vr-exit-btn');
+            const topBarHTML = document.getElementById('top-bar');
+
+            if (esVR) {
+                // 🥽 MODO GAFAS / CARDBOARD
+                // El retículo HTML sustituye al cursor de A-Frame en iOS
+                sceneEl.removeAttribute('cursor');
+                cursor.removeAttribute('cursor');
+                cursor.removeAttribute('raycaster');
+                cursor.setAttribute('visible', 'false');
+
+                // ENCENDEMOS GIROSCOPIO
+                cam.setAttribute('look-controls', 'enabled: true; magicWindowTrackingEnabled: true; reverseMouseDrag: false');
+
+                exitBtn.setAttribute('visible', 'true');
+                exitBtn.classList.add('vr-btn');
+                topBarHTML.style.display = 'none';
+
+                iniciarReticuloVR();
+
+            } else {
+                // 📱 MODO PANTALLA TÁCTIL
+                // Ratón/Dedo, Giroscopio OFF para evitar conflictos
+                cursor.removeAttribute('cursor');
+                cursor.removeAttribute('raycaster');
+                cursor.setAttribute('visible', 'false');
+                cursor.setAttribute('position', '0 0 -1');
+
+                // APAGAMOS GIROSCOPIO (Clave para que no se vuelva loco el táctil)
+                cam.setAttribute('look-controls', 'enabled: true; magicWindowTrackingEnabled: false; reverseMouseDrag: false');
+
+                sceneEl.setAttribute('cursor', 'rayOrigin: mouse');
+                sceneEl.setAttribute('raycaster', 'objects: .hotspot-clickable');
+
+                exitBtn.setAttribute('visible', 'false');
+                exitBtn.classList.remove('vr-btn');
+                topBarHTML.style.display = 'flex';
+
+                detenerReticuloVR();
+            }
+
+            cargarSala(centroActivo.salas[0].id);
+        }
+
+        function salirVRCompleto() {
+            const sceneEl = document.querySelector('a-scene');
+            if (sceneEl.is('vr-mode')) {
+                sceneEl.exitVR();
+            }
+            salirAlHome();
+        }
+
+        function salirAlHome() {
+            document.getElementById('visor-container').classList.remove('visible');
+            document.getElementById('hotspots-container').innerHTML = '';
+            document.getElementById('sky-img').removeAttribute('src');
+
+            centroActivo = null;
+            salaActiva = null;
+            window.salaAnteriorId = null;
+            modoVRActivo = false;
+
+            document.getElementById('home-screen').classList.remove('hidden');
+
+            const topControls = document.getElementById('top-controls');
+            if (topControls) topControls.style.display = 'flex';
+            detenerReticuloVR();
+        }
+
+        // Detectar si sale del modo VR con el botón físico "Atrás" del móvil
+        document.querySelector('a-scene').addEventListener('exit-vr', function () {
+            if (centroActivo) salirAlHome();
+        });
+
+
+        // ── COMPONENTE HOTSPOT Y TRANSICIÓN "DIVE" ──────────────────
+        AFRAME.registerComponent('user-hotspot', {
+            schema: { destino: { type: 'string' }, clickedIndex: { type: 'int' } },
+            init: function () {
+                const el = this.el;
+
+                el.addEventListener('mouseenter', () => {
+                    document.body.style.cursor = 'pointer';
+                    el.setAttribute('animation__hover', 'property: scale; to: 1.1 1.1 1.1; dur: 200; easing: easeOutQuad');
+                });
+                el.addEventListener('mouseleave', () => {
+                    document.body.style.cursor = 'default';
+                    el.setAttribute('animation__hover', 'property: scale; to: 1 1 1; dur: 200; easing: easeOutQuad');
+                });
+                el.addEventListener('click', () => {
+                    if (!isTransitioning && this.data.destino) {
+                        realizarTransicion(this.data.destino, this.data.clickedIndex);
+                    }
+                });
+            }
+        });
+
+        function realizarTransicion(salaDestinoId, clickedIndex) {
+            if (isTransitioning || (salaActiva && salaDestinoId === salaActiva.id)) return;
+            isTransitioning = true;
+
+            const cam = document.getElementById('main-camera');
+            const lookControls = cam.components['look-controls'];
+
+            // 1. Bloquear cámara
+            if (lookControls) {
+                cam.setAttribute('look-controls', 'enabled', false);
+                window.guardadoYaw = lookControls.yawObject.rotation.y * (180 / Math.PI);
+                window.guardadoPitch = lookControls.pitchObject.rotation.x * (180 / Math.PI);
+            }
+
+            // 2. Mirar hacia el hotspot antes de hacer el "Dive"
+            if (clickedIndex !== null && salaActiva.hotspots[clickedIndex]) {
+                const hsClicked = salaActiva.hotspots[clickedIndex];
+                window.offsetYaw = window.guardadoYaw - hsClicked.rotacion.y;
+
+                if (lookControls) {
+                    const startPitch = lookControls.pitchObject.rotation.x;
+                    const startYaw = lookControls.yawObject.rotation.y;
+                    const targetPitch = hsClicked.rotacion.x * (Math.PI / 180);
+                    const targetYaw = hsClicked.rotacion.y * (Math.PI / 180);
+
+                    let diffYaw = targetYaw - startYaw;
+                    diffYaw = Math.atan2(Math.sin(diffYaw), Math.cos(diffYaw));
+                    const finalYaw = startYaw + diffYaw;
+
+                    let startTime = null;
+                    const easeInOutQuad = t => t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+                    function animarMirada(time) {
+                        if (!startTime) startTime = time;
+                        let progress = (time - startTime) / 600;
+                        if (progress > 1) progress = 1;
+                        const ease = easeInOutQuad(progress);
+                        lookControls.pitchObject.rotation.x = startPitch + (targetPitch - startPitch) * ease;
+                        lookControls.yawObject.rotation.y = startYaw + (finalYaw - startYaw) * ease;
+                        if (progress < 1) requestAnimationFrame(animarMirada);
+                    }
+                    requestAnimationFrame(animarMirada);
+                }
+            }
+
+            window.salaAnteriorId = salaActiva ? salaActiva.id : null;
+
+            const fade = document.getElementById('fade-transition');
+
+            // 3. Efecto DIVE (Reducimos FOV brutalmente)
+            cam.setAttribute('animation__dive', 'property: camera.fov; to: 10; dur: 900; easing: easeInCubic');
+
+            // 4. Fundido a negro en el momento del "choque"
+            setTimeout(() => {
+                fade.classList.add('active');
+            }, 700);
+
+            // 5. Cambio de sala
+            setTimeout(() => {
+                cargarSala(salaDestinoId);
+
+                cam.removeAttribute('animation__dive');
+                cam.setAttribute('camera', 'fov', 70); // Restaurar vista periférica
+
+                if (lookControls) cam.setAttribute('look-controls', 'enabled', true);
+
+                setTimeout(() => {
+                    fade.classList.remove('active');
+                    isTransitioning = false;
+                }, 150);
+            }, 1000);
+        }
+
+        // ── CARGAR SALA Y HOTSPOTS ──────────────────────────────────
+        function cargarSala(salaId) {
+            salaActiva = centroActivo.salas.find(s => s.id === salaId);
+            if (!salaActiva) return;
+
+            const sky = document.getElementById('sky-img');
+            const imgPath = centroActivo.carpeta + salaActiva.foto;
+            sky.setAttribute('src', imgPath);
+
+            const elSalaInfo = document.getElementById('ui-sala-nombre');
+            if (elSalaInfo) {
+                elSalaInfo.textContent = salaActiva.nombre[currentLang] || salaActiva.nombre.es || salaActiva.nombre;
+            }
+
+            const cam = document.getElementById('main-camera');
+            let targetYaw = 0;
+            let targetPitch = 0;
+
+            if (window.salaAnteriorId) {
+                const hsRetorno = (salaActiva.hotspots || []).find(h => h.destino === window.salaAnteriorId);
+                if (hsRetorno) {
+                    let frenteBase = hsRetorno.rotacion.y + 180;
+                    targetYaw = frenteBase + (window.offsetYaw || 0);
+                    targetPitch = window.guardadoPitch || 0;
+                } else {
+                    targetYaw = window.guardadoYaw || 0;
+                    targetPitch = window.guardadoPitch || 0;
+                }
+            } else {
+                if (salaActiva.hotspots && salaActiva.hotspots.length > 0) {
+                    targetYaw = salaActiva.hotspots[0].rotacion.y;
+                    targetPitch = salaActiva.hotspots[0].rotacion.x;
+                }
+            }
+
+            cam.setAttribute('rotation', '0 0 0');
+            if (cam.components['look-controls']) {
+                cam.components['look-controls'].pitchObject.rotation.x = targetPitch * (Math.PI / 180);
+                cam.components['look-controls'].yawObject.rotation.y = targetYaw * (Math.PI / 180);
+            }
+
+            renderEsferasUsuario();
+        }
+
+        function renderEsferasUsuario() {
+            const container = document.getElementById('hotspots-container');
+            container.innerHTML = '';
+
+            if (!salaActiva.hotspots) return;
+
+            salaActiva.hotspots.forEach((hs, index) => {
+                const base = document.createElement('a-entity');
+
+                const dist = hs.dist || 7;
+                const r = Math.PI / 180;
+                const rx = hs.rotacion.x * r, ry = hs.rotacion.y * r;
+
+                base.setAttribute('position', `${dist * Math.cos(rx) * Math.sin(ry)} ${dist * Math.sin(rx)} ${-dist * Math.cos(rx) * Math.cos(ry)}`);
+                base.setAttribute('billboard', '');
+
+                const sombra = document.createElement('a-circle');
+                sombra.setAttribute('radius', '0.85');
+                sombra.setAttribute('color', '#000000');
+                sombra.setAttribute('material', 'shader: flat; opacity: 0.35; transparent: true;');
+                sombra.setAttribute('position', '0 0 -0.01');
+
+                const nucleo = document.createElement('a-sphere');
+                nucleo.setAttribute('radius', '0.6');
+                nucleo.setAttribute('color', '#00A5FF');
+                nucleo.setAttribute('material', 'shader: flat; opacity: 1;');
+                nucleo.className = 'hotspot-clickable';
+                nucleo.setAttribute('user-hotspot', `destino: ${hs.destino}; clickedIndex: ${index}`);
+
+                const spinnerGroup = document.createElement('a-entity');
+                spinnerGroup.setAttribute('position', '0 0 0');
+
+                const arcDerecho = document.createElement('a-torus');
+                arcDerecho.setAttribute('color', '#FFFFFF');
+                arcDerecho.setAttribute('radius', '0.75');
+                arcDerecho.setAttribute('radius-tubular', '0.04');
+                arcDerecho.setAttribute('arc', '90');
+                arcDerecho.setAttribute('rotation', '0 0 -45');
+                arcDerecho.setAttribute('material', 'shader: flat; opacity: 1;');
+
+                const arcIzquierdo = document.createElement('a-torus');
+                arcIzquierdo.setAttribute('color', '#FFFFFF');
+                arcIzquierdo.setAttribute('radius', '0.75');
+                arcIzquierdo.setAttribute('radius-tubular', '0.04');
+                arcIzquierdo.setAttribute('arc', '90');
+                arcIzquierdo.setAttribute('rotation', '0 0 135');
+                arcIzquierdo.setAttribute('material', 'shader: flat; opacity: 1;');
+
+                nucleo.addEventListener('mouseenter', () => {
+                    spinnerGroup.setAttribute('animation', 'property: rotation; to: 0 0 -360; dur: 800; loop: true; easing: linear');
+                });
+
+                nucleo.addEventListener('mouseleave', () => {
+                    spinnerGroup.removeAttribute('animation');
+                });
+
+                spinnerGroup.appendChild(arcDerecho);
+                spinnerGroup.appendChild(arcIzquierdo);
+
+                base.appendChild(sombra);
+                base.appendChild(spinnerGroup);
+                base.appendChild(nucleo);
+                container.appendChild(base);
+            });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            const isDark = document.body.classList.contains('dark-theme');
+            localStorage.setItem('navegaTheme', isDark ? 'dark' : 'light');
+
+            const cb = document.getElementById('theme-checkbox');
+            if (cb) cb.checked = !isDark;
+        }
+
+        const savedTheme = localStorage.getItem('navegaTheme');
+        if (savedTheme === 'light') {
+            document.body.classList.remove('dark-theme');
+            const cb = document.getElementById('theme-checkbox');
+            if (cb) cb.checked = true;
+        } else {
+            document.body.classList.add('dark-theme');
+            const cb = document.getElementById('theme-checkbox');
+            if (cb) cb.checked = false;
+        }
+
+        // ── RETÍCULO VR PARA iOS ──────────────────────────────────
+        let vrRaycastInterval = null;
+        let fusingTarget = null;
+        let fusingProgress = 0;
+        let fusingTimer = null;
+
+        function iniciarReticuloVR() {
+            const reticle = document.getElementById('vr-reticle');
+            reticle.style.display = 'block';
+
+            // Ocultar el cursor de A-Frame completamente
+            document.getElementById('vr-cursor').setAttribute('visible', 'false');
+
+            vrRaycastInterval = setInterval(() => {
+                const sceneEl = document.querySelector('a-scene');
+                const cam = document.getElementById('main-camera');
+                if (!sceneEl || !cam) return;
+
+                // Crear rayo desde el centro de la cámara
+                const raycaster = new THREE.Raycaster();
+                const camObj = cam.object3D;
+                const direction = new THREE.Vector3(0, 0, -1);
+                direction.applyQuaternion(camObj.quaternion);
+                raycaster.set(camObj.position, direction);
+
+                // Buscar hotspots clicables
+                const hotspotEls = document.querySelectorAll('.hotspot-clickable');
+                const meshes = [];
+                hotspotEls.forEach(el => {
+                    el.object3D.traverse(obj => {
+                        if (obj.isMesh) meshes.push({ mesh: obj, el: el });
+                    });
+                });
+
+                const targets = meshes.map(m => m.mesh);
+                const intersects = raycaster.intersectObjects(targets, false);
+
+                const reticleEl = document.getElementById('vr-reticle');
+
+                if (intersects.length > 0) {
+                    // Apuntando a un hotspot — animar fusing
+                    const hitMesh = intersects[0].object;
+                    const hitEntry = meshes.find(m => m.mesh === hitMesh);
+                    const hitEl = hitEntry ? hitEntry.el : null;
+
+                    reticleEl.style.transform = 'translate(-50%, -50%) scale(1.4)';
+                    reticleEl.querySelector('circle:first-child').setAttribute('fill', '#6ed8bc');
+
+                    if (fusingTarget !== hitEl) {
+                        // Nuevo objetivo — reiniciar temporizador
+                        fusingTarget = hitEl;
+                        fusingProgress = 0;
+                        clearTimeout(fusingTimer);
+                        fusingTimer = setTimeout(() => {
+                            if (fusingTarget && !isTransitioning) {
+                                // Simular click en el hotspot
+                                const comp = fusingTarget.components['user-hotspot'];
+                                if (comp) {
+                                    realizarTransicion(comp.data.destino, comp.data.clickedIndex);
+                                }
+                                fusingTarget = null;
+                            }
+                        }, 1500); // 1.5 segundos mirando = click
+                    }
+                } else {
+                    // No apunta a nada
+                    reticleEl.style.transform = 'translate(-50%, -50%) scale(1)';
+                    reticleEl.querySelector('circle:first-child').setAttribute('fill', 'white');
+
+                    if (fusingTarget) {
+                        clearTimeout(fusingTimer);
+                        fusingTarget = null;
+                    }
+                }
+            }, 100); // Revisar 10 veces por segundo
+        }
+
+        function detenerReticuloVR() {
+            const reticle = document.getElementById('vr-reticle');
+            if (reticle) reticle.style.display = 'none';
+            clearInterval(vrRaycastInterval);
+            clearTimeout(fusingTimer);
+            vrRaycastInterval = null;
+            fusingTarget = null;
+        }
+    </script>
+</body>
+
+</html>
