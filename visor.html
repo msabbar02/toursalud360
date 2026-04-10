@@ -1526,11 +1526,7 @@
 
         function entrarModoVR() {
             document.getElementById('vr-modal').classList.remove('show');
-            goFullscreen(); // Llama a pantalla completa
             prepararEscena(true);
-
-            // EL CONSEJO DE ORO PARA EL USUARIO
-            alert("CONSEJO: Asegúrate de tener activado el GIRO AUTOMÁTICO en tu móvil. Ponlo en horizontal y toca la pantalla negra para empezar. ¡No toques la 'X'!");
 
             const sceneEl = document.querySelector('a-scene');
             if (sceneEl.hasLoaded) {
@@ -1560,11 +1556,11 @@
 
             if (esVR) {
                 // 🥽 MODO GAFAS / CARDBOARD
-                // El retículo HTML sustituye al cursor de A-Frame en iOS
+                // Usamos el cursor nativo de A-frame para VR
                 sceneEl.removeAttribute('cursor');
-                cursor.removeAttribute('cursor');
-                cursor.removeAttribute('raycaster');
-                cursor.setAttribute('visible', 'false');
+                cursor.setAttribute('raycaster', 'objects: .hotspot-clickable');
+                cursor.setAttribute('cursor', 'fuse: true; fuseTimeout: 1500; rayOrigin: entity');
+                cursor.setAttribute('visible', 'true');
 
                 // ENCENDEMOS GIROSCOPIO
                 cam.setAttribute('look-controls', 'enabled: true; magicWindowTrackingEnabled: true; reverseMouseDrag: false');
