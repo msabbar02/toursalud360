@@ -1206,7 +1206,7 @@
                 <a-circle src="imagenes/toursalud360-nadir.png" radius="1.8" position="0 -1.8 0" rotation="-90 0 0"
                     material="shader: flat; transparent: true; opacity: 0.9;"></a-circle>
 
-                <a-circle id="vr-exit-btn" radius="0.8" position="0 -1.75 1.5" rotation="-90 0 0"
+                <a-circle id="vr-exit-btn" class="hotspot-clickable" radius="0.8" position="0 -1.75 1.5" rotation="-90 0 0"
                     material="color: #ff3366; shader: flat" visible="false">
                     <a-text value="SALIR VR" align="center" position="0 0 0.05" rotation="0 0 0" color="#fff" width="4"
                         font="mozillavr" font-weight="bold"></a-text>
@@ -1525,6 +1525,23 @@
         }
 
         function entrarModoVR() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            _ejecutarVR();
+                        } else {
+                            alert("Se requiere acceso al giroscopio para la experiencia VR.");
+                            _ejecutarVR();
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                _ejecutarVR();
+            }
+        }
+
+        function _ejecutarVR() {
             document.getElementById('vr-modal').classList.remove('show');
             prepararEscena(true);
 
