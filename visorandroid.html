@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>TourSalud360 — Selector de Plataforma</title>
+    <title>TourSalud360 — Visor Android</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="tour.js" type="text/javascript"></script>
@@ -1116,23 +1116,23 @@
 
     <div id="vr-modal" class="modal-overlay">
         <div class="modal-box" style="max-width: 500px;">
-            <h2 style="border:none; margin-bottom: 10px; color: var(--text-main);" id="vr-modal-title">Elige tu
-                plataforma</h2>
-            <p style="color: var(--text-muted); margin-bottom: 25px; font-size:13px;" id="vr-modal-desc">Abriremos el
-                visor optimizado para tu dispositivo</p>
+            <h2 style="border:none; margin-bottom: 10px; color: var(--text-main);" id="vr-modal-title">¿Cómo quieres
+                navegar?</h2>
+            <p style="color: var(--text-muted); margin-bottom: 25px; font-size:13px;" id="vr-modal-desc">Elige el
+                formato de tu experiencia</p>
 
             <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
 
-                <button class="vr-choice-btn" onclick="abrirVisorAndroid()">
-                    <span style="font-size: 38px;">🤖</span>
-                    <span style="font-size: 14px; font-weight: 600;">Android</span>
-                    <span style="font-size: 10px; opacity: 0.6; margin-top: 4px;">Visor optimizado para Android</span>
+                <button class="vr-choice-btn" onclick="entrarModoNormal()">
+                    <span style="font-size: 38px;">📱</span>
+                    <span style="font-size: 14px; font-weight: 600;">Pantalla Táctil</span>
+                    <span style="font-size: 10px; opacity: 0.6; margin-top: 4px;">Móvil / PC / Tablet</span>
                 </button>
 
-                <button class="vr-choice-btn active-vr" onclick="abrirVisorIOS()">
-                    <span style="font-size: 38px;">🍎</span>
-                    <span style="font-size: 14px; font-weight: 600;">iPhone / iOS</span>
-                    <span style="font-size: 10px; opacity: 0.6; margin-top: 4px;">Visor optimizado para Safari</span>
+                <button class="vr-choice-btn active-vr" onclick="entrarModoVR()">
+                    <span style="font-size: 38px;">🥽</span>
+                    <span style="font-size: 14px; font-weight: 600;">Gafas VR</span>
+                    <span style="font-size: 10px; opacity: 0.6; margin-top: 4px;">Cardboard / Quest</span>
                 </button>
 
             </div>
@@ -1283,7 +1283,7 @@
         let isTransitioning = false;
         let currentLang = localStorage.getItem('navegaLang') || 'es';
         let modoVRActivo = false;
-        let centroSeleccionadoIndex = null;
+        const centroInicialIndex = Number.parseInt(new URLSearchParams(window.location.search).get('centro'), 10);
 
         // Hack para que iPhone recalcule bien el centro al girar la pantalla
         window.addEventListener('orientationchange', () => {
@@ -1410,6 +1410,10 @@
             setTimeout(() => {
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('home-screen').classList.remove('hidden');
+
+                if (Number.isInteger(centroInicialIndex) && TOUR.centros[centroInicialIndex] && TOUR.centros[centroInicialIndex].salas && TOUR.centros[centroInicialIndex].salas.length > 0) {
+                    iniciarTour(centroInicialIndex);
+                }
             }, 800);
 
             requestAnimationFrame(actualizarRadar);
@@ -1503,30 +1507,39 @@
 
         // ── CONTROL DE MODOS (PANTALLA O VR) ────────────────────────
         function iniciarTour(index) {
-            centroSeleccionadoIndex = index;
             centroActivo = TOUR.centros[index];
-            document.getElementById('vr-modal').classList.add('show');
+            document.getElementById('vr-modal').classList.add('show'); // Abrir Modal Selector
         }
 
         function cerrarVRModal() {
             document.getElementById('vr-modal').classList.remove('show');
             centroActivo = null;
-            centroSeleccionadoIndex = null;
         }
 
-        function abrirVisorAndroid() {
-            abrirVisorPlataforma('android');
+        // Función para forzar pantalla completa nativa del móvil
+        function goFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) { elem.requestFullscreen(); }
+            else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); } // iOS Safari
         }
 
-        function abrirVisorIOS() {
-            abrirVisorPlataforma('ios');
+        function entrarModoNormal() {
+            document.getElementById('vr-modal').classList.remove('show');
+            goFullscreen(); // <- Llama a pantalla completa
+            prepararEscena(false);
         }
 
-        function abrirVisorPlataforma(plataforma) {
-            if (centroSeleccionadoIndex === null) return;
+        function entrarModoVR() {
+            document.getElementById('vr-modal').classList.remove('show');
+            goFullscreen();
+            prepararEscena(true);
 
-            const destino = plataforma === 'ios' ? 'visorios.html' : 'visorandroid.html';
-            window.location.href = `${destino}?centro=${centroSeleccionadoIndex}`;
+            const sceneEl = document.querySelector('a-scene');
+            if (sceneEl.hasLoaded) {
+                sceneEl.enterVR();
+            } else {
+                sceneEl.addEventListener('loaded', () => sceneEl.enterVR());
+            }
         }
 
         function prepararEscena(esVR) {
